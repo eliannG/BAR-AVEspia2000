@@ -149,7 +149,14 @@ select{width:100%;background:var(--panel2);color:var(--text);border:1px solid va
 .hit h3{color:var(--ok);font-size:1.15rem;margin-bottom:6px}
 .hit .m{font-family:var(--mono);font-size:.8rem;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;gap:3px 10px}
 .hit .m b{color:var(--text);font-weight:400}
-video{width:100%;border-radius:10px;background:#000;margin-top:10px;max-height:60vh}
+.vbox{width:96vw;height:94vh;max-width:none;display:flex;flex-direction:column;padding:16px 20px;overflow:hidden}
+.vhead{flex:none}
+.vhead .sub{margin-bottom:8px}
+.vwrap{position:relative;flex:1;min-height:0;background:#000;border-radius:10px;overflow:hidden}
+.vwrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;pointer-events:none}
+#static{position:absolute;inset:0;width:100%;height:100%;display:none}
+#static.on{display:block}
+.vwrap::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px)}
 .close{float:right;background:none;border:0;color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1}
 
 /* big announcements */
@@ -223,7 +230,7 @@ video{width:100%;border-radius:10px;background:#000;margin-top:10px;max-height:6
     </div>
     <div class="i-title">Bienvenido a AVE<span>spía</span> Localizator 2000</div>
     <div class="i-sub">Una forma de vivir no paranoica.</div>
-    <div class="i-note" id="note">NOTA: AVEspía Localizator 2000 es una aplicación <span class="con" id="con">sin<svg viewBox="0 0 60 20" preserveAspectRatio="none"><polyline points="0,10 8,3 16,17 24,3 32,17 40,3 48,17 56,3 60,10"/></svg></span><span class="sin" id="sin"> con</span> intenciones de lucro.</div>
+    <div class="i-note" id="note">NOTA: AVEspía Localizator 2000 es una aplicación sin intenciones de lucro.</div>
     <button class="btn" id="btnStart">▶ Iniciar sistema</button>
   </div>
 
@@ -254,12 +261,12 @@ video{width:100%;border-radius:10px;background:#000;margin-top:10px;max-height:6
       </div>
       <div class="plan hot" data-plan="Cóndor"><span class="best">MÁS VIGILADO</span>
         <h3>🦅 Cóndor</h3><div class="price">$ 89.990 <small>/ mes</small></div>
-        <ul><li>Todas las unidades en 500 m</li><li>Alertas cuando una unidad te mira</li><li>Videos interceptados (cuando podemos)</li><li>Tu nombre borrado de 1 (una) base de datos</li><li class="no">Que te dejen de seguir</li></ul>
+        <ul><li>Todas las unidades en 500 m</li><li>Alertas cuando una unidad te mira</li><li>Videos interceptados (cuando podemos)</li><li class="no">Que te dejen de seguir</li></ul>
         <button class="btn">Elegir Cóndor</button>
       </div>
       <div class="plan" data-plan="Illuminati">
         <h3>👁️ Illuminati</h3><div class="price">$ 1.250.000 <small>/ mes</small></div>
-        <ul><li>Pasás a estar del otro lado</li><li>Una unidad a tu nombre (con tu cara)</li><li>Acceso a las cámaras de tus vecinos</li><li>Paloma bebé de regalo (foto, no real)</li><li>Soporte 24/7 vía tero</li></ul>
+        <ul><li>Pasás a estar del otro lado</li><li>Acceso a las cámaras de tus vecinos</li><li>Soporte 24/7 vía paloma mensajera</li></ul>
         <button class="btn ghost">Elegir Illuminati</button>
       </div>
     </div>
@@ -334,14 +341,16 @@ video{width:100%;border-radius:10px;background:#000;margin-top:10px;max-height:6
 </div>
 
 <div class="modal" id="mVideo">
-  <div class="box">
+  <div class="box vbox">
     <button class="close" data-close="mVideo">×</button>
-    <h2 style="color:var(--ok)">Video interceptado</h2>
-    <p class="sub">Unidad ELIAN-01 · Costa Rica 4677 · Sujeto de interés: Elián Gonzalo</p>
-    <video id="vid" controls playsinline>
-      <source src="video/captura.mp4" type="video/mp4">
-      <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-    </video>
+    <div class="vhead"><h2 style="color:var(--ok)">Video interceptado</h2><p class="sub">Unidad ELIAN-01 · Costa Rica 4677 · Sujeto de interés: Elián Gonzalo · REC ●</p></div>
+    <div class="vwrap">
+      <video id="vid" muted playsinline preload="auto" disablepictureinpicture>
+        <source src="video/captura.mp4" type="video/mp4">
+        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+      </video>
+      <canvas id="static"></canvas>
+    </div>
   </div>
 </div>
 
@@ -353,7 +362,7 @@ const rnd=(a,b)=>Math.random()*(b-a)+a, ri=(a,b)=>Math.floor(rnd(a,b+1)), pick=a
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let USER='ciudadano';
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{$('#'+b.dataset.close).classList.remove('on');$('#vid').pause()});
-document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){m.classList.remove('on');$('#vid').pause()}}));
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){if(m.id==='mVideo')closeVideo();else m.classList.remove('on')}}));
 
 // ===== sound (WebAudio, sin archivos) =====
 function chime(){
@@ -380,11 +389,7 @@ async function loadBar(bar,txt,msgs,total){
 $('#s5').addEventListener('click',()=>{skipLoad=true});
 $('#btnStart').onclick=async()=>{
   $('#btnStart').disabled=true;chime();
-  await sleep(700);
-  const con=$('#con');con.classList.add('strike');
-  await sleep(900);con.classList.add('fly');
-  await sleep(700);con.style.display='none';$('#sin').classList.add('on');
-  await sleep(1600);
+  await sleep(1800);
   step(2);
   await loadBar($('#ld1'),$('#lt1'),['Conectando con las estaciones de carga...','Descargando firmware de 8 unidades...','Interceptando cámaras (fallando)...','Interceptando cámaras (fallando otra vez)...','Interceptando UNA cámara (logrado)...','Calibrando para Costa Rica 4677...','Listo. Ya sabían que ibas a entrar.'],5200);
   await sleep(500);step(3);$('#name').focus();
@@ -406,17 +411,49 @@ $('#btnCreator').onclick=async()=>{
   const ok=isElian();
   $('#roast').innerHTML=ok?`<b>¿Vos sos el creador de esto?</b><br><br>
   ${USER}. Identidad confirmada por ${birds.length} unidades, ninguna impresionada.<br><br>
-  Le pusiste "Localizator 2000" en el año ${new Date().getFullYear()}. El logo es un pájaro con hélices y un micrófono colgando, y estás orgulloso.<br><br>
-  Hay un video tuyo en el sistema. Lo grabaste vos mismo. <b>Nadie te lo pidió.</b><br><br>
+  Le pusiste "Localizator 2000" en el año ${new Date().getFullYear()}.<br><br>
   Bienvenido igual. Alguien tiene que presentar esto.`
   :`<b>¿Vos sos el creador de esto?</b><br><br>
   No, ${USER}. No lo sos. ${birds.length} unidades lo confirman y una se rió.<br><br>
-  El creador se llama Elián, tiene ${ri(30,47)} pestañas abiertas y un video en el sistema que nadie le pidió.<br><br>
+  El creador se llama Elián y tiene ${ri(30,47)} pestañas abiertas.<br><br>
   Igual te dejamos pasar. Ya sabíamos que ibas a intentarlo.`;
   await loadBar($('#ld2'),$('#lt2'),[],20000);
   enterMap();
 };
-function enterMap(){addVideoBird();render();$('#intro').classList.add('off');setTimeout(()=>map.invalidateSize(),50);startAnnouncements();announce('📡','Sesión iniciada',`Bienvenido, ${USER}. Tu ubicación ya estaba registrada, pero gracias por confirmarla.`,9000)}
+// ===== video: precarga, autoplay, estática al final =====
+const vid=$('#vid'),stc=$('#static');
+let staticTimer=null;
+function drawStatic(){
+  const c=stc,ctx=c.getContext('2d');c.width=Math.max(160,c.clientWidth/3|0);c.height=Math.max(90,c.clientHeight/3|0);
+  const img=ctx.createImageData(c.width,c.height),d=img.data;
+  for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}
+  ctx.putImageData(img,0,0);
+  // banda horizontal que baja
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(0,(performance.now()/6)%c.height,c.width,c.height*.08);
+}
+function staticNoise(dur=1.1){
+  try{const ac=new (window.AudioContext||window.webkitAudioContext)();const len=ac.sampleRate*dur,buf=ac.createBuffer(1,len,ac.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(i<len*.85?.25:.25*(1-(i-len*.85)/(len*.15)));
+  const n=ac.createBufferSource();n.buffer=buf;n.connect(ac.destination);n.start()}catch(e){}
+}
+function showStatic(ms,then){ // ms=Infinity → permanente hasta cerrar
+  cancelAnimationFrame(staticTimer);stc.classList.add('on');
+  const t0=performance.now();
+  (function f(){drawStatic();if(performance.now()-t0<ms)staticTimer=requestAnimationFrame(f);else{stc.classList.remove('on');then&&then()}})();
+}
+function openVideo(){
+  hideAnn(); // cierra el anuncio que esté visible; el próximo espera a que cierres el video
+  $('#mVideo').classList.add('on');
+  vid.muted=true;vid.currentTime=0;
+  // arranca con un golpe de estática, después el video
+  showStatic(500,()=>{vid.play().catch(()=>{})});
+}
+function closeVideo(){cancelAnimationFrame(staticTimer);stc.classList.remove('on');vid.pause();$('#mVideo').classList.remove('on');scheduleNext()}
+vid.addEventListener('ended',()=>{showStatic(Infinity)});
+document.querySelector('[data-close="mVideo"]').onclick=closeVideo;
+vid.addEventListener('click',e=>e.preventDefault());
+
+function enterMap(){addVideoBird();render();$('#intro').classList.add('off');if(isElian()){try{vid.load()}catch(e){}}setTimeout(()=>map.invalidateSize(),50);startAnnouncements();announce('📡','Sesión iniciada',`Bienvenido, ${USER}. Tu ubicación ya estaba registrada, pero gracias por confirmarla.`,9000)}
 
 // ===== venue: Costa Rica 4677, Palermo =====
 const VENUE=[-34.5921,-58.4245];
@@ -441,6 +478,10 @@ const MODELS=[
  {id:'TER',name:'Tero',ico:'🦤',role:'Alarma perimetral'},
  {id:'HOR',name:'Hornero',ico:'🐦',role:'Construcción de antenas'},
  {id:'BEN',name:'Benteveo',ico:'🐤',role:'Identificación por grito'},
+];
+const FIXED_JOKES=[
+ '{N} saludó a alguien que no lo saludaba a él.',
+ '{N} miró 9 veces al cielo hoy.',
 ];
 const JOKES=[
  ()=>'{N} saludó a alguien que no lo saludaba a él.',
@@ -478,7 +519,7 @@ function mkBird(i,fixed){
     lat:pos[0],lng:pos[1],tLat:pos[0],tLng:pos[1],alt:fixed?6:ri(0,30),batt:fixed?100:ri(20,100),
     state:fixed?'charging':pick(['flying','charging','ground','ground','charging']),
     wait:rnd(3,15),speed:rnd(0.6,1.4),joke:'',jokeIdx:-1,jokeT:rnd(20,60),vidMin:ri(2,58)};
-  if(!fixed){const j=takeJoke();b.joke=j.text;b.jokeIdx=j.i}
+  if(!fixed&&i<FIXED_JOKES.length)b.joke=FIXED_JOKES[i];
   b.el=document.createElement('div');b.el.className='bird';
   b.lbl=document.createElement('div');b.lbl.className='lbl';b.el.appendChild(b.lbl);
   b.mk=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',html:b.el,iconSize:[20,20],iconAnchor:[10,10]}),zIndexOffset:fixed?1000:0}).addTo(map);
@@ -513,7 +554,6 @@ const DT=0.1;
 function tick(){
   birds.forEach(b=>{
     if(b.fixed){b.lbl.textContent='ELIAN-01 · VIDEO';return}
-    b.jokeT-=DT;if(b.jokeT<=0){const j=takeJoke();b.joke=j.text;b.jokeIdx=j.i;b.jokeT=rnd(25,70)}
     if(b.state==='flying'){
       const dLat=b.tLat-b.lat,dLng=b.tLng-b.lng,d=Math.hypot(dLat,dLng);
       const step=0.000012*b.speed;
@@ -537,7 +577,7 @@ function render(){
   const html=birds.slice().sort((a,b)=>(b.fixed?1:0)-(a.fixed?1:0)).map(b=>{
     const [sname,scls]=b.fixed?['Cargando · grabando','st-video']:ST[b.state];
     const bc=b.batt<20?'low':b.batt<50?'mid':'';
-    const vid=b.fixed?`<button class="btnv" data-vid="1">▶ VIDEO DISPONIBLE (interceptado hace ${Math.max(1,Math.round(secs/60))} min)</button>`
+    const vid=b.fixed?`<button class="btnv" data-vid="1">▶ VIDEO DISPONIBLE (grabado hace 4 horas)</button>`
       :`<div class="v" style="color:var(--muted)">Video capturado hace ${b.vidMin} min · <span style="color:var(--danger)">no fue posible interceptar</span></div>`;
     return `<div class="unit ${sel===b?'sel':''}" data-id="${b.id}">
       <div class="n"><span>${b.m.ico} ${b.id}</span><i class="${scls}">${sname}</i></div>
@@ -547,7 +587,7 @@ function render(){
         <span>Dist. <b>${dist(b)} m</b></span><span>Función <b>${b.m.role}</b></span>
         <span style="grid-column:1/3">Batería <b>${Math.round(b.batt)}%</b><div class="bar"><i class="${bc}" style="width:${b.batt}%"></i></div></span>
       </div>
-      ${b.fixed?'':`<div class="j">${withName(b.joke)}</div>`}
+      ${b.joke?`<div class="j">${withName(b.joke)}</div>`:''}
       ${vid}
     </div>`}).join('');
   $('#list').innerHTML=html;
@@ -556,7 +596,7 @@ function render(){
 setInterval(()=>{secs++;$('#clock').textContent=new Date().toLocaleTimeString('es-AR');render()},1000);
 render();
 $('#list').addEventListener('click',e=>{
-  if(e.target.dataset.vid){$('#mVideo').classList.add('on');const v=$('#vid');v.currentTime=0;v.play().catch(()=>{});return}
+  if(e.target.dataset.vid){openVideo();return}
   const u=e.target.closest('.unit');if(!u)return;
   const b=birds.find(x=>x.id===u.dataset.id);if(b)select(b,true);
 });
@@ -620,6 +660,7 @@ function announce(ic,t,b,dur=9000){
 }
 $('#ann').onclick=hideAnn;
 function nextAnn(){
+  if($('#mVideo').classList.contains('on')){scheduleNext();return} // no interrumpir el video
   if(!annQ.length)annQ=[...ANN];
   const [ic,t,b]=annQ.splice(ri(0,annQ.length-1),1)[0];
   announce(ic,t,withName(b),9000);
