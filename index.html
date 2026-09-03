@@ -373,7 +373,9 @@ function step(n){document.querySelectorAll('.step').forEach(s=>s.classList.remov
 let skipLoad=false;
 async function loadBar(bar,txt,msgs,total){
   const t0=performance.now();let mi=-1;skipLoad=false;
-  return new Promise(res=>{(function f(){const p=skipLoad?1:Math.min(1,(performance.now()-t0)/total);bar.style.width=(p*100)+'%';if(p<1)requestAnimationFrame(f);else res()})()});
+  return new Promise(res=>{(function f(){const p=skipLoad?1:Math.min(1,(performance.now()-t0)/total);bar.style.width=(p*100)+'%';
+    if(msgs.length){const k=Math.min(msgs.length-1,Math.floor(p*msgs.length));if(k!==mi){mi=k;txt.textContent=msgs[k]}}
+    if(p<1)requestAnimationFrame(f);else res()})()});
 }
 $('#s5').addEventListener('click',()=>{skipLoad=true});
 $('#btnStart').onclick=async()=>{
@@ -384,7 +386,7 @@ $('#btnStart').onclick=async()=>{
   await sleep(700);con.style.display='none';$('#sin').classList.add('on');
   await sleep(1600);
   step(2);
-  await loadBar($('#ld1'),$('#lt1'),[],4200);
+  await loadBar($('#ld1'),$('#lt1'),['Conectando con las estaciones de carga...','Descargando firmware de 8 unidades...','Interceptando cámaras (fallando)...','Interceptando cámaras (fallando otra vez)...','Interceptando UNA cámara (logrado)...','Calibrando para Costa Rica 4677...','Listo. Ya sabían que ibas a entrar.'],5200);
   await sleep(500);step(3);$('#name').focus();
 };
 $('#btnName').onclick=()=>{
@@ -401,11 +403,16 @@ document.querySelectorAll('.plan').forEach(p=>p.onclick=async()=>{
 });
 $('#btnCreator').onclick=async()=>{
   step(5);
-  $('#roast').innerHTML=`<b>¿Vos sos el creador de esto?</b><br><br>
-  Elián Gonzalo. Identidad confirmada por 6 unidades, ninguna impresionada.<br><br>
+  const ok=isElian();
+  $('#roast').innerHTML=ok?`<b>¿Vos sos el creador de esto?</b><br><br>
+  ${USER}. Identidad confirmada por ${birds.length} unidades, ninguna impresionada.<br><br>
   Le pusiste "Localizator 2000" en el año ${new Date().getFullYear()}. El logo es un pájaro con hélices y un micrófono colgando, y estás orgulloso.<br><br>
   Hay un video tuyo en el sistema. Lo grabaste vos mismo. <b>Nadie te lo pidió.</b><br><br>
-  Bienvenido igual. Alguien tiene que presentar esto.`;
+  Bienvenido igual. Alguien tiene que presentar esto.`
+  :`<b>¿Vos sos el creador de esto?</b><br><br>
+  No, ${USER}. No lo sos. ${birds.length} unidades lo confirman y una se rió.<br><br>
+  El creador se llama Elián, tiene ${ri(30,47)} pestañas abiertas y un video en el sistema que nadie le pidió.<br><br>
+  Igual te dejamos pasar. Ya sabíamos que ibas a intentarlo.`;
   await loadBar($('#ld2'),$('#lt2'),[],20000);
   enterMap();
 };
@@ -429,16 +436,38 @@ for(let i=0;i<10;i++){
 const MODELS=[
  {id:'PAL',name:'Paloma común',ico:'🕊️',role:'Vigilancia de veredas'},
  {id:'GOR',name:'Gorrión',ico:'🐦',role:'Escucha de mesas de bar'},
- {id:'COT',name:'Cotorra',ico:'🦜',role:'Guerra psicológica (7 AM)'},
+ {id:'COT',name:'Cotorra',ico:'🦜',role:'Volar alto sin detectar curvatura de la Tierra'},
+ {id:'GAV',name:'Gaviota',ico:'🕊️',role:'Auditoría de lo que comés en la playa'},
  {id:'TER',name:'Tero',ico:'🦤',role:'Alarma perimetral'},
  {id:'HOR',name:'Hornero',ico:'🐦',role:'Construcción de antenas'},
  {id:'BEN',name:'Benteveo',ico:'🐤',role:'Identificación por grito'},
 ];
 const JOKES=[
- '{N} saludó a alguien que no lo saludaba a él.',
- '{N} revisó el celular 14 veces en 2 minutos. Sin notificaciones.',
+ ()=>'{N} saludó a alguien que no lo saludaba a él.',
+ ()=>`{N} revisó el celular ${ri(9,23)} veces en 2 minutos. Sin notificaciones.`,
+ ()=>`Latidos por minuto de {N}: ${ri(68,104)} bpm. Subieron cuando abrió esta app.`,
+ ()=>`{N} realizó ${ri(13,21)} respiraciones por minuto. ${ri(2,5)} fueron suspiros.`,
+ ()=>`Temperatura corporal de {N}: 36,${ri(4,9)} °C. Normal. Lamentablemente.`,
+ ()=>`{N} parpadeó ${ri(280,520)} veces en la última hora. ${ri(4,20)} fueron para mirar hacia acá.`,
+ ()=>`{N} caminó ${ri(1200,4800)} pasos hoy. ${ri(300,900)} en círculos.`,
+ ()=>`Nivel de estrés de {N}: ${ri(61,94)} %. Fuente: la forma en que sostiene el celular.`,
+ ()=>`{N} miró hacia arriba ${ri(3,11)} veces. Todas registradas. Ninguna sospechó.`,
+ ()=>`{N} dijo "no, todo bien" ${ri(2,6)} veces hoy. Precisión del detector de mentiras: 100 %.`,
+ ()=>`Audio interceptado: {N} tarareando una canción que no sabe. ${ri(40,90)} segundos.`,
+ ()=>`{N} pasó ${ri(4,14)} minutos eligiendo qué comer. Eligió lo mismo de siempre.`,
+ ()=>`{N} se acomodó el pelo ${ri(5,17)} veces frente a una vidriera. La vidriera estaba apagada.`,
+ ()=>`Frecuencia cardíaca de {N} al ver una paloma de cerca: ${ri(95,128)} bpm. Sabe.`,
+ ()=>`{N} abrió la app, la cerró y la volvió a abrir. Sin motivo. Como siempre.`,
+ ()=>`{N} lleva ${ri(2,9)} horas sin tomar agua. La unidad recomienda hidratarse. Por interés propio.`,
 ];
 const withName=s=>s.replace(/\{N\}/g,USER.split(' ')[0]);
+let jokePool=[];
+function takeJoke(){
+  const inUse=new Set(birds.map(b=>b.jokeIdx));
+  if(!jokePool.length)jokePool=JOKES.map((_,i)=>i).sort(()=>Math.random()-.5);
+  let idx=jokePool.findIndex(i=>!inUse.has(i));if(idx<0)idx=0;
+  const i=jokePool.splice(idx,1)[0];return {i,text:JOKES[i]()};
+}
 const NAMES=['ALFA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA'];
 
 const birds=[];
@@ -448,7 +477,8 @@ function mkBird(i,fixed){
   const b={id:fixed?'ELIAN-01':`${m.id}-${NAMES[i%NAMES.length]}-${ri(10,99)}`,m,fixed,
     lat:pos[0],lng:pos[1],tLat:pos[0],tLng:pos[1],alt:fixed?6:ri(0,30),batt:fixed?100:ri(20,100),
     state:fixed?'charging':pick(['flying','charging','ground','ground','charging']),
-    wait:rnd(3,15),speed:rnd(0.6,1.4),joke:pick(JOKES),jokeT:rnd(20,60),vidMin:ri(2,58)};
+    wait:rnd(3,15),speed:rnd(0.6,1.4),joke:'',jokeIdx:-1,jokeT:rnd(20,60),vidMin:ri(2,58)};
+  if(!fixed){const j=takeJoke();b.joke=j.text;b.jokeIdx=j.i}
   b.el=document.createElement('div');b.el.className='bird';
   b.lbl=document.createElement('div');b.lbl.className='lbl';b.el.appendChild(b.lbl);
   b.mk=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',html:b.el,iconSize:[20,20],iconAnchor:[10,10]}),zIndexOffset:fixed?1000:0}).addTo(map);
@@ -483,7 +513,7 @@ const DT=0.1;
 function tick(){
   birds.forEach(b=>{
     if(b.fixed){b.lbl.textContent='ELIAN-01 · VIDEO';return}
-    b.jokeT-=DT;if(b.jokeT<=0){b.joke=pick(JOKES);b.jokeT=rnd(25,70)}
+    b.jokeT-=DT;if(b.jokeT<=0){const j=takeJoke();b.joke=j.text;b.jokeIdx=j.i;b.jokeT=rnd(25,70)}
     if(b.state==='flying'){
       const dLat=b.tLat-b.lat,dLng=b.tLng-b.lng,d=Math.hypot(dLat,dLng);
       const step=0.000012*b.speed;
@@ -567,30 +597,34 @@ const ANN=[
  ['🍞','Alerta ciudadana','Alguien le tiró migas a una unidad. Ya lo tenemos. Ya sabemos dónde vive.'],
  ['🎥','Captura','{N} fue registrado por 4 unidades simultáneas. Ninguna encontró nada interesante.'],
  ['🛰️','Sistema','Actualización de firmware programada para el próximo atardecer. Formación en V confirmada.'],
- ['🧠','Análisis','{N} dijo "es un segundo". Cronómetro en marcha: 41 minutos.'],
  ['🕊️','Unidad PAL','Una paloma miró a {N} durante 9 segundos y decidió que no valía la pena.'],
  ['🚶','Movilidad','{N} se cambió de vereda para evitar a alguien. Esa persona hizo lo mismo. Ambos lo saben.'],
  ['👋','Registro','{N} saludó a alguien que en realidad saludaba a otra persona. Sostuvo el saludo igual.'],
 ];
 const firstName=()=>USER.split(' ')[0];
-let annQ=[...ANN].sort(()=>Math.random()-.5),annBusy=false;
+let annQ=[],annStarted=false,nextT=null;
+function hideAnn(){
+  const a=$('#ann');if(!a.classList.contains('on'))return;
+  clearTimeout(a._t);a.classList.remove('on');
+  scheduleNext(); // el conteo del próximo arranca cuando se cierra el actual
+}
+function scheduleNext(){
+  if(!annStarted)return;
+  clearTimeout(nextT);nextT=setTimeout(nextAnn,ri(15000,30000));
+}
 function announce(ic,t,b,dur=9000){
-  const a=$('#ann');a.style.setProperty('--dur',dur+'ms');
+  const a=$('#ann');clearTimeout(nextT);a.style.setProperty('--dur',dur+'ms');
   $('#annI').textContent=ic;$('#annT').textContent=t;$('#annB').textContent=b;
   a.classList.remove('on');void a.offsetWidth;a.classList.add('on');blip(1100);
-  clearTimeout(a._t);a._t=setTimeout(()=>a.classList.remove('on'),dur);
+  clearTimeout(a._t);a._t=setTimeout(hideAnn,dur);
 }
-$('#ann').onclick=()=>{const a=$('#ann');clearTimeout(a._t);a.classList.remove('on')};
-function startAnnouncements(){
-  (function loop(){
-    setTimeout(()=>{
-      if(!annQ.length)annQ=[...ANN].sort(()=>Math.random()-.5);
-      const [ic,t,b]=annQ.pop();
-      announce(ic,t,withName(b),9000);
-      loop();
-    },ri(15000,30000));
-  })();
+$('#ann').onclick=hideAnn;
+function nextAnn(){
+  if(!annQ.length)annQ=[...ANN];
+  const [ic,t,b]=annQ.splice(ri(0,annQ.length-1),1)[0];
+  announce(ic,t,withName(b),9000);
 }
+function startAnnouncements(){annStarted=true;}
 </script>
 </body>
 </html>
